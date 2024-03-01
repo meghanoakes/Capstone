@@ -9,13 +9,13 @@
 # %%
 #Install and Import Necessary Libraries
 
-pip install NLTK 
-pip install pandas 
-pip install requests 
-pip install tensorflow
-pip install wordcloud
-pip install seaborn
-pip install streamlit
+#pip install NLTK 
+#pip install pandas 
+#pip install requests 
+#pip install tensorflow
+#pip install wordcloud
+#pip install seaborn
+#pip install streamlit
 
 # %%
 #Import packages / libraries to follow naming conventions
