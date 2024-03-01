@@ -19,11 +19,11 @@
 
 # %%
 #Import packages / libraries to follow naming conventions
-pip install wordcloud
+
 #One-offs
 import pandas as pd
 import requests
-import WordCloud
+#import WordCloud
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -73,15 +73,15 @@ def Explore (dataframe):
 def LookPretty(dataframe, text_column):
     
     #Prep text for wordcloud
-    text_corpus = ' '.join(dataframe[text_column].astype(str))
-    wordcloud = WordCloud(width=800, height=400, random_state=42, max_font_size=100).generate(text_corpus)
+   # text_corpus = ' '.join(dataframe[text_column].astype(str))
+    #wordcloud = WordCloud(width=800, height=400, random_state=42, max_font_size=100).generate(text_corpus)
 
     #Wordcloud of Text
-    plt.figure(figsize=(12, 8))
-    plt.imshow(wordcloud, interpolation="bilinear")
-    plt.axis('off')
-    plt.title('Word Cloud for Essay')
-    plt.show()
+   # plt.figure(figsize=(12, 8))
+   # plt.imshow(wordcloud, interpolation="bilinear")
+   # plt.axis('off')
+  #  plt.title('Word Cloud for Essay')
+  #  plt.show()
 
      # Display plot of stopwords
     plt.figure(figsize=(10, 6))
