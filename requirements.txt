@@ -2,3 +2,4 @@ streamlit
 NLTK
 Tensorflow
 Numpy
+Seaborn
