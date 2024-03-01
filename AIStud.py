@@ -19,7 +19,7 @@
 
 # %%
 #Import packages / libraries to follow naming conventions
-
+pip install wordcloud
 #One-offs
 import pandas as pd
 import requests
