@@ -20,7 +20,7 @@
 # %%
 #Import packages / libraries to follow naming conventions
 
-#One-offs
+#One-off
 import pandas as pd
 import requests
 #import WordCloud
