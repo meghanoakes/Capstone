@@ -1,27 +1,26 @@
-# %%
 import pandas as pd
-
-# %%
-#Read CSV Train Data
-train = pd.read_csv('C:/Users/megha/Desktop/Capstone/train_essays.csv')
-train.head()
-
-# %%
-#Check for / remove missing values
-train.info()
-
-# %%
-import pandas as pd
-from nltk.tokenize import word_tokenize
-import nltk
-nltk.download('punkt')
 import seaborn as sns
 
 import matplotlib.pyplot as plt
+from keras.preprocessing.sequence import pad_sequences
+import tensorflow as tf
+from tensorflow.keras.preprocessing.text import Tokenizer
+import json
+from keras.models import Sequential
+from keras.layers import Embedding, Bidirectional, LSTM, Dense, GlobalMaxPooling1D
 
+from nltk.tokenize import word_tokenize
+import nltk
 
-# %%
-#Need to get an idea of sequence length in the text as a hyperparamter for the model
+#Read CSV Train Data
+train = pd.read_csv('C:/Users/megha/Desktop/Capstone/train_essays.csv', encoding='ANSI')
+train.head()
+
+#Check for / remove missing values
+train.info()
+
+nltk.download('punkt')
+
 
 # Tokenize text and count number of words
 train['word_count'] = train['text'].apply(lambda x: len(word_tokenize(x)))
@@ -32,7 +31,6 @@ max_word_count = train['word_count'].max()
 min_word_count = train['word_count'].min()
 mode_word_count = train['word_count'].mode()
 median_word_count = train['word_count'].median()
-
 
 print(f"Average Number of Words: {average_word_count:.2f}")
 print(f"Maximum Number of Words: {max_word_count}")
@@ -47,32 +45,27 @@ plt.title('Boxplot')
 plt.xlabel('Number of Words')
 plt.show()
 
-# %%
 #Decide Vocab Size
-from tensorflow.keras.preprocessing.text import Tokenizer
-
 tokenizer = Tokenizer()
 tokenizer.fit_on_texts(train['text'])
 vocab_size = len(tokenizer.word_index) + 1
 
 print(vocab_size)
 
-# %%
-#Decide Max sequence length
+#Determine Max sequence length
 max_sequence_length = max(len(sequence) for sequence in train['text'])
 print(max_sequence_length)
 
-# %%
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-X_train_sequences = tokenizer.texts_to_sequences(train['text'])
-X_train_padded = pad_sequences(X_train_sequences, maxlen=max_sequence_length, padding='post')
+x_train_sequences = tokenizer.texts_to_sequences(train['text'])
+x_train_padded = pad_sequences(x_train_sequences, maxlen=max_sequence_length, padding='post')
+x_df_padded = pd.DataFrame(x_train_padded)
 
-y_train = y_train = train['generated']
+y_train = train['generated']
 
-# %%
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Embedding, Bidirectional, LSTM, Dense, GlobalMaxPooling1D
+print(x_df_padded.head())
+
+
 
 # Define the model
 model = Sequential()
@@ -82,7 +75,7 @@ embedding_dim = 30
 model.add(Embedding(input_dim = vocab_size, output_dim = embedding_dim))
 
 # Bidirectional LSTM layers
-model.add(Bidirectional(LSTM(units=64, return_sequences=True)))
+#model.add(Bidirectional(LSTM(units=64, return_sequences=True)))
 model.add(Bidirectional(LSTM(units=32, return_sequences=True)))
 
 # Global Max Pooling layer 
@@ -98,13 +91,25 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 # Display the model summary
 model.summary()
 
-
-
-# %%
-
-
 # Fit Model to training data
-model.fit(X_train_padded, y_train, epochs=10, batch_size=32, validation_split=0.2)
+model.fit(x_df_padded, y_train, steps_per_epoch=1, epochs=1, batch_size=32, validation_split=0.2)
 
+test = pd.read_csv("C:/Users/megha/Downloads/test.csv", encoding='ANSI')
 
+# Save the trained model
+model.save('saved_model.keras')
+# Save the tokenizer to a file
+JsonTokenizer = tokenizer.to_json()
+with open('tokenizer.json', 'w', encoding='ANSI') as json_file:
+    json_file.write(JsonTokenizer)
 
+## TEST ##
+cleaned_text = ''.join([char for char in test['text'] if char.isalnum() or char.isspace()])
+sequences = tokenizer.texts_to_sequences(cleaned_text)
+padded_sequences = pad_sequences(sequences, maxlen=8452, padding='post')
+padded_sequences = pd.DataFrame(padded_sequences)
+
+predictions = model.predict(padded_sequences)
+
+# Display results
+print(padded_sequences['predictions'])
