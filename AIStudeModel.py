@@ -13,7 +13,7 @@ from nltk.tokenize import word_tokenize
 import nltk
 
 #Read CSV Train Data
-train = pd.read_csv('C:/Users/megha/Desktop/Capstone/train_essays.csv', encoding='UTF-8')
+train = pd.read_csv('train_essays.csv', encoding='UTF-8')
 train.head()
 
 #Check for / remove missing values
