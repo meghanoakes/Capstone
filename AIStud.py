@@ -20,22 +20,25 @@
 # %%
 #Import packages / libraries to follow naming conventions
 
-#One-offs
+#One-off
 import pandas as pd
 import requests
-#import WordCloud
+import numpy as np
 import streamlit as st
 
 #NLTK Specific
 import nltk
+import tensorflow as tf
 nltk.download('stopwords')
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-
-#Tensorflow Specific
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import load_model
-
+import streamlit as st
+from keras.models import load_model
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.text import tokenizer_from_json
+from keras.preprocessing.sequence import pad_sequences
+import json
+import AIStudeModel
 
 
 # %% [markdown]
@@ -46,13 +49,13 @@ from tensorflow.keras.models import load_model
 
 # dataframe from a csv
 def GetFile(csv_path):
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path, encoding='UTF-8')
     return df
 
 #dataframe from a url
 def GetFileURL(url):
     response = requests.get(url)
-    df = pd.read_csv(pd.compat.StringIO(response.text))
+    df = pd.read_csv(pd.compat.StringIO(response.text), encoding='UTF-8')
     return df
 
 # %%
@@ -68,7 +71,7 @@ def Explore (dataframe):
 
 # Define Function for relevant data visualization
     
-def LookPretty(dataframe, text_column):
+#def LookPretty(dataframe):
     
     #Prep text for wordcloud
    # text_corpus = ' '.join(dataframe[text_column].astype(str))
@@ -82,34 +85,45 @@ def LookPretty(dataframe, text_column):
   #  plt.show()
 
      # Display plot of stopwords
-    plt.figure(figsize=(10, 6))
-    sns.histplot(dataframe['stopwords_count'], kde=True)
-    plt.title('Distribution of Stopwords Count')
-    plt.xlabel('Stopwords Count')
-    plt.ylabel('Frequency')
-    plt.show()
+    # plt.figure(figsize=(10, 6))
+    # sns.histplot(dataframe['stopwords_count'], kde=True)
+    # plt.title('Distribution of Stopwords Count')
+    # plt.xlabel('Stopwords Count')
+    # plt.ylabel('Frequency')
+    # plt.show()
+
+    #Display a plot of stopwords
+    #plot_values = np.histogram(dataframe['stop_words_count'])
+    #st.bar_chart(plot_values)
 
 # %%
 #Define Function for Cleaning   
 
 #stop word setup
-from nltk.corpus import stopwords
-stop_words = set(stopwords.words('english'))
-
-def CleanSweep(text):
+def CleanSweep(dataframe):
+    stop_words = set(stopwords.words('english'))
     # Convert to lowercase and remove punctuation
-    cleaned_text = ''.join([char for char in text.lower() if char.isalnum() or char.isspace()])
-    
-    # Tokenize the text
-    words = word_tokenize(cleaned_text)
+    cleaned_text = ''.join([char for char in dataframe['text'] if char.isalnum() or char.isspace()])
     
     # Count the number of stop words
-    stop_words_count = sum(1 for word in words if word in stop_words)
+    #stop_words_count = sum(1 for word in words if word in stop_words)
     
     # Remove stop words
-    filtered_words = [word for word in words if word not in stop_words]
+    #filtered_words = [word for word in words if word not in stop_words]
+
+    # Tokenize and pad sequences using the same tokenizer and max_length
+    with open('tokenizer.json', 'r', encoding='UTF-8') as json_file:
+        loaded_tokenizer_json = json_file.read()
+        loaded_tokenizer = tokenizer_from_json(loaded_tokenizer_json)
+
+    sequences = loaded_tokenizer.texts_to_sequences(cleaned_text)
+    padded_sequences = pad_sequences(sequences, maxlen=8452, padding='post')
     
-    return ' '.join(filtered_words), stop_words_count
+    padded_sequences = pd.DataFrame(padded_sequences)
+
+    return padded_sequences
+
+
 
 
 # %%
@@ -119,16 +133,16 @@ def CleanSweep(text):
 # %%
 #Defining the app and functionalities
 
-# app.py
-import streamlit as st
-
 # Main function to run the app
 def main():
     st.title("Educational Data Product")
 
     # File upload section
     st.sidebar.header("Upload CSV File")
+    st.sidebar.subheader("CSV must have UTF-8 encoding so that streamlit can read it.")
+    st.sidebar.subheader("Open in Notebook > Save As > Encoding drop down > UTF-8")
     uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type=["csv"])
+
 
     if uploaded_file is not None:
         # Process the uploaded file
@@ -137,30 +151,22 @@ def main():
         st.write(df)
 
         # Clean things up
-        df[['cleaned_text', 'stop_words_count']] = df['text_column'].apply(CleanSweep)
-
-        # Tokenize the text and prepare the data for the model
-        max_words = 10000
-        padded_sequences, tokenizer = tokenize_text(df['cleaned_text'], max_words)
-
+        df = CleanSweep(df)
 
         # Check Out the File
         Explore(df)
 
-        # Visualize Important Stuff
-        LookPretty(df,df['cleaned_text'])
-
         # Import model and run
         st.header("Model Results:")
-        import AIStudModel.ipynb
-        result = AIStudModel.model(df)
 
-        #Display Result 
-        st.write(result)
-        #st.write(Accuracy Score)
+        # Make predictions with user data
+        predictions = AIStudeModel.model.predict(df)
 
-        #Generate Report for Download
-        ## st.download_button('Download Report', df.to_csv())
+        # Display results
+        df['predictions'] = predictions
+        st.write("Predictions:")
+        st.write(df[['text', 'predictions']])
+
 
 if __name__ == "__main__":
     main()
@@ -178,5 +184,3 @@ if __name__ == "__main__":
 # - used libraries
 # - example file
 # - screenshots or a video of a user walking through the process
-
-
